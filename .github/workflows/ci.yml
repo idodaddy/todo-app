@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (client)
+        run: npm run lint -w client
+
+      - name: Test (server)
+        id: test
+        run: npx vitest run --reporter=verbose -w server 2>&1 | tee test-output.txt
+
+      - name: Comment test results on PR
+        if: always() && steps.test.outcome != 'skipped'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('test-output.txt')) return;
+            const output = fs.readFileSync('test-output.txt', 'utf8');
+            const status = '${{ steps.test.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed';
+
+            const body = `## Test Results: ${status}
+
+            \`\`\`
+            ${output.slice(-3000)}
+            \`\`\`
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
