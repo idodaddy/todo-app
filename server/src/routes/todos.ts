@@ -3,6 +3,11 @@ import db from "../db";
 
 const router = Router();
 
+router.use((req, _res, next) => {
+  console.log(`${req.method} ${req.originalUrl}`);
+  next();
+});
+
 type Priority = "high" | "medium" | "low";
 
 interface Todo {
