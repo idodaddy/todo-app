@@ -27,11 +27,12 @@ jobs:
         run: npx vitest run --reporter=verbose -w server 2>&1 | tee test-output.txt
 
       - name: Comment test results on PR
-        if: always()
+        if: always() && steps.test.outcome != 'skipped'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
+            if (!fs.existsSync('test-output.txt')) return;
             const output = fs.readFileSync('test-output.txt', 'utf8');
             const status = '${{ steps.test.outcome }}' === 'success' ? '✅ Passed' : '❌ Failed';
 

@@ -15,10 +15,6 @@ export default function TodoList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadTodos();
-  }, []);
-
   async function loadTodos(query?: string) {
     const res = await fetchTodos(query);
     if (res.error) {
@@ -27,6 +23,10 @@ export default function TodoList() {
       setTodos(res.data);
     }
   }
+
+  useEffect(() => {
+    loadTodos();
+  }, []);
 
   function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
     const query = e.target.value;
